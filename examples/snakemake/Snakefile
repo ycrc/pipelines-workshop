@@ -1,0 +1,98 @@
+from itertools import combinations
+
+# Path to input data relative to this Snakefile's directory
+DATA_DIR = "../data"
+
+# Discover play names from input files
+PLAYS, = glob_wildcards(DATA_DIR + "/{play}.txt")
+
+# Generate all unique pairs (sorted so play1 < play2 alphabetically)
+PAIRS = list(combinations(sorted(PLAYS), 2))
+PLAY1S = [p[0] for p in PAIRS]
+PLAY2S = [p[1] for p in PAIRS]
+
+# Constrain wildcards: play names use lowercase letters and hyphens only.
+# This prevents ambiguity when parsing {play1}_{play2} filenames.
+wildcard_constraints:
+    play  = "[a-z-]+",
+    play1 = "[a-z-]+",
+    play2 = "[a-z-]+"
+
+# Use bash (not sh) so we can use process substitution <(...)
+shell.executable("/bin/bash")
+
+# Default target: when this is complete, the pipeline is complete.
+rule all:
+    input:
+        "output/similarity_matrix.csv"
+
+# Step 1a: Clean text — lowercase, remove punctuation, one word per line
+rule clean_text:
+    input:
+        DATA_DIR + "/{play}.txt"
+    output:
+        temp("output/{play}.clean.txt")
+    shell:
+        """
+        cat {input} \
+            | tr '[:upper:]' '[:lower:]' \
+            | tr -d '[:punct:]' \
+            | tr -s '[:space:]' '\\n' \
+            > {output}
+        """
+
+# Step 1b: Count word frequencies
+rule count_words:
+    input:
+        "output/{play}.clean.txt"
+    output:
+        temp("output/{play}.counts.txt")
+    shell:
+        """
+        sort {input} | uniq -c | sort -rn > {output}
+        """
+
+# Step 1c: Extract top 100 most frequent words
+rule top_words:
+    input:
+        "output/{play}.counts.txt"
+    output:
+        "output/{play}.top100.txt"
+    shell:
+        """
+        head -100 {input} > {output}
+        """
+
+# Step 2: Compare two plays using Jaccard similarity of their top words
+rule compare_plays:
+    input:
+        top1 = "output/{play1}.top100.txt",
+        top2 = "output/{play2}.top100.txt"
+    output:
+        "output/{play1}_{play2}.similarity"
+    shell:
+        """
+        COMMON=$(comm -12 \
+            <(awk '{{print $2}}' {input.top1} | sort) \
+            <(awk '{{print $2}}' {input.top2} | sort) \
+            | wc -l)
+        TOTAL1=$(wc -l < {input.top1})
+        TOTAL2=$(wc -l < {input.top2})
+        UNION=$((TOTAL1 + TOTAL2 - COMMON))
+        echo "scale=3; $COMMON / $UNION" | bc > {output}
+        """
+
+# Step 3: Combine all pairwise results into a CSV matrix
+rule combine_results:
+    input:
+        expand("output/{play1}_{play2}.similarity", zip, play1=PLAY1S, play2=PLAY2S)
+    output:
+        "output/similarity_matrix.csv"
+    run:
+        with open(output[0], "w") as out:
+            out.write("play1,play2,similarity\n")
+            for f in input:
+                name = f.replace("output/", "").replace(".similarity", "")
+                p1, p2 = name.split("_", 1)
+                sim = open(f).read().strip()
+                out.write(f"{p1},{p2},{sim}\n")
