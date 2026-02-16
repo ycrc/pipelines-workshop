@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 320" font-family="sans-serif" font-size="14">
+  <!-- nodes -->
+  <rect x="80" y="10" width="100" height="36" rx="6" fill="#4a90d9" stroke="#2a6ab5" stroke-width="1.5"/>
+  <text x="130" y="33" text-anchor="middle" fill="white" font-weight="bold">Input</text>
+
+  <rect x="20" y="90" width="100" height="36" rx="6" fill="#5ba55b" stroke="#3d8a3d" stroke-width="1.5"/>
+  <text x="70" y="113" text-anchor="middle" fill="white" font-weight="bold">Step A</text>
+
+  <rect x="140" y="90" width="100" height="36" rx="6" fill="#5ba55b" stroke="#3d8a3d" stroke-width="1.5"/>
+  <text x="190" y="113" text-anchor="middle" fill="white" font-weight="bold">Step B</text>
+
+  <rect x="20" y="170" width="100" height="36" rx="6" fill="#5ba55b" stroke="#3d8a3d" stroke-width="1.5"/>
+  <text x="70" y="193" text-anchor="middle" fill="white" font-weight="bold">Step C</text>
+
+  <rect x="140" y="170" width="100" height="36" rx="6" fill="#5ba55b" stroke="#3d8a3d" stroke-width="1.5"/>
+  <text x="190" y="193" text-anchor="middle" fill="white" font-weight="bold">Step D</text>
+
+  <rect x="80" y="250" width="100" height="36" rx="6" fill="#d9534f" stroke="#b94441" stroke-width="1.5"/>
+  <text x="130" y="273" text-anchor="middle" fill="white" font-weight="bold">Output</text>
+
+  <!-- edges -->
+  <line x1="110" y1="46" x2="70" y2="90" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="150" y1="46" x2="190" y2="90" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="70" y1="126" x2="70" y2="170" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="190" y1="126" x2="190" y2="170" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="70" y1="126" x2="190" y2="170" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="90" y1="206" x2="110" y2="250" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="170" y1="206" x2="150" y2="250" stroke="#666" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- arrowhead marker -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#666"/>
+    </marker>
+  </defs>
+</svg>

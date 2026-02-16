@@ -1,3 +1,11 @@
+# To run this pipeline:
+#   cd examples/snakemake
+#   module load snakemake
+#   snakemake -n          # dry run — shows what would be executed
+#   snakemake -j1         # run with 1 core
+#   snakemake -j4         # run with 4 cores in parallel
+#   snakemake --dag | dot -Tpng > dag.png   # visualize the DAG
+
 from itertools import combinations
 
 # Path to input data relative to this Snakefile's directory
@@ -88,11 +96,14 @@ rule combine_results:
         expand("output/{play1}_{play2}.similarity", zip, play1=PLAY1S, play2=PLAY2S)
     output:
         "output/similarity_matrix.csv"
-    run:
-        with open(output[0], "w") as out:
-            out.write("play1,play2,similarity\n")
-            for f in input:
-                name = f.replace("output/", "").replace(".similarity", "")
-                p1, p2 = name.split("_", 1)
-                sim = open(f).read().strip()
-                out.write(f"{p1},{p2},{sim}\n")
+    shell:
+        """
+        echo "play1,play2,similarity" > {output}
+        for file in {input}; do
+            basename=$(basename "$file" .similarity)
+            play1=$(echo "$basename" | cut -d'_' -f1)
+            play2=$(echo "$basename" | cut -d'_' -f2-)
+            similarity=$(cat "$file")
+            echo "${{play1}},${{play2}},${{similarity}}" >> {output}
+        done
+        """
