@@ -2,12 +2,50 @@
 marp: true
 theme: default
 paginate: true
+header: "Pipelining Tools for HPC Workflows"
+footer: "February 24, 2026"
 ---
 
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&display=swap');
 .columns { display: flex; gap: 1em; }
 .columns > div { flex: 1; }
+section h1, section h2, section h3 { font-family: 'Roboto Slab', serif; }
 img[alt~="center"] { display: block; margin: 0 auto; }
+header {
+  font-family: 'Roboto Slab', serif;
+  color: #999;
+  font-size: 0.6em;
+  width: 100%;
+  text-align: right;
+  left: 0;
+  right: 0;
+  padding: 20px 60px 20px 30px;
+  box-sizing: border-box;
+}
+footer {
+  font-family: 'Roboto Slab', serif;
+  color: #999;
+  font-size: 0.6em;
+  width: 100%;
+  text-align: center;
+  left: 0;
+  right: 0;
+  padding: 0 30px 0px 30px;
+  box-sizing: border-box;
+}
+section::after { font-family: 'Roboto Slab', serif; }
+section::before {
+  content: '';
+  background-image: url('images/ycrc-logo-white.png');
+  background-size: contain;
+  background-repeat: no-repeat;
+  position: absolute;
+  bottom: 20px;
+  left: 30px;
+  width: 100px;
+  height: 50px;
+}
 </style>
 
 # Pipelining Tools for HPC Workflows
@@ -20,17 +58,19 @@ Yale Center for Research Computing
 
 # Agenda
 
-- The Problem: why pipelines?
-- Pipelining concepts
-- Our example workflow
-- Bash & Slurm
-- Snakemake
-- Nextflow
-- NF-Core & resources
+- **The Problem**: why pipelines?
+- **Pipelining concepts**
+- **Our example workflow**
+- **Bash & Slurm**
+- **Snakemake**: turning our example into a Snakemake pipeline
+- **Nextflow**: using pipelines from the research community
+- **Resources**
 
 ---
 
 # Setup
+
+<!-- #TODO: Expand setup slide with commands for workshop repo clone, ls to check contents etc. -->
 
 - Log in to the cluster
 - Clone the workshop repo
@@ -81,6 +121,9 @@ Yale Center for Research Computing
 ---
 
 # Today's Learning Goals
+
+<!-- #TODO: Learning goals: workflow translation is snakemake only, nextflow is concepts and then existing pipelines. -->
+
 - Understand key concepts for constructing data pipelines
 - Build a simple workflow using bash scripts and Slurm
 - Translate that workflow into Snakemake and Nextflow
@@ -92,6 +135,8 @@ Yale Center for Research Computing
 # Pipelining Concepts
 
 ---
+
+<!-- #TODO: Add more examples of DAG diagrams, "this is a DAG" "this is not" etc. -->
 
 # Flowcharts and DAGs
 
@@ -160,10 +205,14 @@ Yale Center for Research Computing
 
 # The DAG
 
+<!-- #TODO: Workflow image doesn't fit well, text too small. Make it horizontal with only 2 plays so it's more readable. -->
+
 ![center h:480](images/workflow-dag.png)
 
 
 ---
+
+<!-- #TODO: During bash portion, show an illustration of how the data is being modified through each step in the pipeline. -->
 
 # The Bash Scripts
 
@@ -361,7 +410,7 @@ done
 - Runs everything **serially** — no parallelism
 - No **dependency tracking** — if one step fails, downstream runs anyway
 - No **checkpointing** — must restart from scratch on failure
-- **Manual cleanup** of intermediate file
+- **Manual cleanup** of intermediate files
 
 ---
 
@@ -667,6 +716,9 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 ---
 
+<!-- #TODO: Add section in Snakemake on how to run python code, R code, existing scripts, matlab script, etc. -->
+<!-- #TODO: Add section in Snakemake on setup for running in HPC on Slurm. -->
+
 # Hands-On: Snakemake
 
 - Run the Snakemake pipeline
@@ -686,7 +738,7 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 - Groovy-based workflow management
 - **Processes** and **channels**
-- Built-in container support (Docker, Singularity)
+- Built-in container support (Docker, Apptainer)
 - Dataflow programming model
 
 ---
@@ -709,6 +761,8 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 # Nextflow Configuration
 
+<!-- #TODO: Add section about config for running on Slurm. Based on Gisela's https://github.com/ggabernet/nf-core-configs/blob/master/conf/mccleary.config -->
+
 - `nextflow.config` for executor, resources, containers
 - Profiles for different environments (local, Slurm)
 - Container support built in
@@ -729,20 +783,129 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 ---
 
-# NF-Core
+# What is nf-core?
 
-- Community-maintained Nextflow pipelines
-- Focus on bioinformatics
-- Best practices built in: containers, testing, documentation
-- Browse available pipelines at https://nf-co.re
+- Community of **100+ curated Nextflow pipelines**
+- Standardized structure: every pipeline works the same way
+- Containerized: all software dependencies bundled
+- Tested and documented by active maintainers
+- Browse pipelines at https://nf-co.re/pipelines
+
+---
+
+# Why Use Pre-Built Pipelines?
+
+- **Tested by hundreds of users** — bugs found and fixed
+- **Reproducible out of the box** — containers, pinned versions
+- **Saves months of development** — focus on your science
+- **Consistent interface** — learn one, use them all:
+
+```bash
+nextflow run nf-core/<pipeline> -profile test,apptainer --outdir results
+```
+
+---
+
+# Hands-On Setup: Start This Now
+
+While I walk through the next slides, run this to download container images:
+
+```bash
+module load Nextflow/24.10.2
+export NXF_APPTAINER_CACHEDIR=~/scratch/apptainer_cache
+mkdir -p $NXF_APPTAINER_CACHEDIR
+nextflow pull nf-core/rnaseq
+```
+
+This caches Apptainer images so the pipeline runs faster later.
+
+---
+
+# nf-core/rnaseq
+
+The most widely-used nf-core pipeline: bulk RNA-seq analysis.
+
+**Steps:**
+1. **FastQC** — raw read quality check
+2. **Trim Galore** — adapter and quality trimming
+3. **STAR** — align reads to reference genome
+4. **Salmon** — quantify gene expression
+5. **MultiQC** — aggregate QC into one report
+
+Test profile uses a tiny yeast dataset (~50K reads).
+
+---
+
+# Running nf-core/rnaseq
+
+```bash
+nextflow run nf-core/rnaseq -profile test,apptainer --outdir results
+```
+
+| Flag                 | Purpose                                |
+| -------------------- | -------------------------------------- |
+| `nf-core/rnaseq`     | Pull and run the pipeline from nf-core |
+| `-profile test`      | Use built-in test dataset (yeast)      |
+| `-profile apptainer` | Use Apptainer containers               |
+| `--outdir results`   | Where to write output                  |
+
+Runs in about **10 minutes** with 4 cores and 16GB RAM.
+
+---
+
+# Inspecting Output
+
+```
+results/
+├── multiqc/          # Start here: HTML summary report
+├── star_salmon/      # Aligned reads + quantification
+├── fastqc/           # Per-sample QC reports
+├── trimgalore/       # Trimmed reads
+└── pipeline_info/    # Execution timeline, versions
+```
+
+Open `results/multiqc/multiqc_report.html` for alignment rates, read quality, and gene detection at a glance.
+
+---
+
+<!-- #TODO: Test the nf-core/rnaseq example pipeline on the cluster before the workshop. -->
+
+# Hands-On: nf-core/rnaseq
+
+Run the pipeline with the test dataset:
+
+```bash
+nextflow run nf-core/rnaseq -profile test,apptainer --outdir results
+```
+
+While it runs, explore:
+- Watch the live progress display
+- When done, look at `results/multiqc/multiqc_report.html`
+- Check `results/pipeline_info/` for the execution report
+
+---
+
+# Finding Pipelines for Your Research
+
+Browse https://nf-co.re/pipelines — examples:
+
+| Domain            | Pipeline         |
+| ----------------- | ---------------- |
+| RNA-seq           | nf-core/rnaseq   |
+| Variant calling   | nf-core/sarek    |
+| Single-cell       | nf-core/scrnaseq |
+| ATAC-seq          | nf-core/atacseq  |
+| Amplicon (16S)    | nf-core/ampliseq |
+| Metagenomics      | nf-core/mag      |
+| Fetch public data | nf-core/fetchngs |
 
 ---
 
 # Resources & Next Steps
 
-- Snakemake documentation
-- Nextflow documentation
-- NF-Core pipeline registry
+- [nf-core documentation](https://nf-co.re/docs/usage/getting_started/introduction)
+- [Nextflow training](https://training.nextflow.io/)
+- [Snakemake documentation](https://snakemake.readthedocs.io/)
 - Yale HPC documentation and office hours
 
 ---

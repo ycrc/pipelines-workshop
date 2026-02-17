@@ -8,7 +8,7 @@ This workshop will introduce HPC users to the different tools available on Yale 
 
 `data/` contains the input data for the example workflow, which is a set of 10 plays by William Shakespeare in UTF-8 encoded plaintext. The output of the workflow is a similarity matrix comparing the top-100 words in each play to each other play.
 
-`examples/bash/` contains the scripts for the example workflow implemented in bash. `examples/snakemake/` and `examples/nextflow/` contain the same workflow implemented in Snakemake and Nextflow, respectively.
+`examples/bash/` contains the scripts for the example workflow implemented in bash. `examples/snakemake/` and `examples/nextflow/` contain the same workflow implemented in Snakemake and Nextflow, respectively. `examples/nf-core/` contains a hands-on guide for running the nf-core/rnaseq pipeline with its built-in test dataset.
 
 ## GenAI Rules
 - Any generated content needs to be simplistic for instruction and not the typical verbosity of a LLM. Much review by human required.
@@ -78,6 +78,5 @@ This workshop will introduce HPC users to the different tools available on Yale 
 
 ## Feedback from Team Review
 
-- During snakemake portion, show an example of how the data is being modified through each step in the pipeline.
-- For Nextflow portion, instead of re-implementing the same workflow, we should focus more on using Nextflow to run preexisting workflows (nf-core?) as that is realistically what most people use it for. Just provide resources for writing own pipelines, but focus on running existing ones.
-  - TODO: Find a good small nf-core example that people can run within a few minutes on a compute node, 1 core and 8GB RAM. 
+- For Nextflow portion, focus on running preexisting nf-core pipelines rather than re-implementing the same workflow.
+  - Using nf-core/rnaseq with test profile (yeast, ~50K reads). Runs in ~10 min on 4 cores/16GB. See `examples/nf-core/README.md`.
