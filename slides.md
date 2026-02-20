@@ -226,6 +226,7 @@ With all 10 plays, the DAG fans out — 45 compare steps:
 
 # The Bash Scripts
 
+
 Our original scripts are found in the workshop repository under `examples/bash/`: 
 
 | Script                  | Purpose                                  |
@@ -270,6 +271,12 @@ cat "$INPUT" \
 
 ---
 
+# 01 — Step 1: What It Looks Like
+
+![center](images/clean-step.png)
+
+---
+
 # 01 — Step 2: Count Word Frequencies
 
 Sort words, count unique occurrences, sort by frequency:
@@ -306,6 +313,12 @@ rm output/${PLAY}.counts.txt
 
 - `data/hamlet.txt` → `output/hamlet.top100.txt`
 - Intermediate `.clean.txt` and `.counts.txt` are deleted
+
+---
+
+# 01 — The Full Picture
+
+![center](images/analyze-pipeline.png)
 
 ---
 
@@ -369,6 +382,12 @@ echo "${SIMILARITY}" > output/${PLAY1}_${PLAY2}.similarity
 
 ---
 
+# 02 — The Full Picture
+
+![center](images/compare-step.png)
+
+---
+
 # 03_combine_results.sh
 
 Loop through all `.similarity` files, build a CSV:
@@ -387,7 +406,6 @@ for file in output/*.similarity; do
 done
 ```
 
-- Parses play names from the filename
 - Final output: `output/similarity_matrix.csv`
 
 ---
@@ -426,13 +444,19 @@ done
 
 # Moving to Slurm
 
-- Add `#SBATCH` directives for resources
-- Add email notifications
-- But still a single serial job — no parallelism
+Our script works, but we're running it on the login node. We need to:
+
+- **Request dedicated resources** — CPU, memory, time
+- **Run in the background** — submit the job and come back later
+- **Get notified** — email when the job finishes or fails
+
+We can wrap `00_run_all.sh` in a Slurm job script with `#SBATCH` directives. This is better, but still a single serial job — no parallelism.
 
 ---
 
 # Hands-On: Bash + Slurm
+
+<!-- TODO: Add a slide with a simple example of a Slurm job script, showing #SBATCH directives and a simple command. Add a start/solution example script pair for users to follow along. Perhaps show a slide with quick reference of SBATCH directives while people are working. -->
 
 - Adapt `00_run_all.sh` to run as a Slurm job
 - Add resource directives and email notification
