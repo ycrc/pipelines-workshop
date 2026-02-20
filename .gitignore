@@ -1,6 +1,11 @@
 node_modules/
 .snakemake/
+.nextflow/
 package*.json
 **/output/
+**/work/
+**/results/
+**/pipeline_info/
 *.pdf
 *.out
+*.log*
