@@ -746,6 +746,8 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 # Hands-On: Snakemake
 
+<!-- I'd like to expand this. First step, users just run the finished pipeline. Second step, users need to add a rule or do something to add to the snakefile and re-run. -->
+
 - Run the Snakemake pipeline
 - Try a dry run, then execute
 - Visualize the DAG
@@ -776,29 +778,49 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 ---
 
-# Translating to Nextflow
+# Snakemake vs Nextflow
 
-- Each step becomes a process
-- Channels wire the DAG together
-- Configuration is separate from workflow logic
+|                         | Snakemake                        | Nextflow                      |
+| ----------------------- | -------------------------------- | ----------------------------- |
+| **Language**            | Python                           | Groovy                        |
+| **Approach**            | File-based (rules produce files) | Dataflow (channels pass data) |
+| **Learning curve**      | Lower (Python syntax)            | Higher (Groovy + channels)    |
+| **Config**              | Snakefile + config.yaml          | nextflow.config + profiles    |
+| **Community pipelines** | Snakemake Catalog                | nf-core                       |
+
+**In general:** Snakemake is more intuitive, while Nextflow has additional features for more complex workflows and deployments.
+
+---
+
+# Nextflow in Practice
+
+Rather than re-implement our Shakespeare workflow, we'll focus on the **most common real-world use case**: running an existing, community-maintained pipeline.
+
+- Thousands of researchers use Nextflow this way every day
+- Someone has already written, tested, and optimized the pipeline
+- You provide your data and configuration — Nextflow does the rest
 
 ---
 
 # Nextflow Configuration
 
-<!-- #TODO: Add section about config for running on Slurm. Based on Gisela's https://github.com/ggabernet/nf-core-configs/blob/master/conf/mccleary.config -->
+Configuration is separate from the pipeline code:
 
-- `nextflow.config` for executor, resources, containers
-- Profiles for different environments (local, Slurm)
-- Container support built in
+- `nextflow.config` — executor, resources, containers
+- **Profiles** — switch between environments (local, Slurm)
+- On our cluster, we use the `apptainer` profile for containers
 
----
-
-# Execution Model
-
-- Work directory for intermediate files
-- Caching and `-resume` for re-runs
-- Execution report and timeline visualization
+```groovy
+// nextflow.config example for Slurm
+process {
+    executor = 'slurm'
+    queue    = 'day'
+}
+apptainer {
+    enabled  = true
+    cacheDir = '~/scratch/apptainer_cache'
+}
+```
 
 ---
 
@@ -809,6 +831,8 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 ---
 
 # What is nf-core?
+
+<!-- TODO: Add slide that is just a screenshot of the nf-core website. -->
 
 - Community of **100+ curated Nextflow pipelines**
 - Standardized structure: every pipeline works the same way
