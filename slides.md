@@ -527,7 +527,7 @@ cat "$INPUT" \
 ```python
 rule clean_text:
     input:
-        DATA_DIR + "/{play}.txt"
+        "data/{play}.txt"
     output:
         temp("output/{play}.clean.txt")
     shell:
@@ -680,47 +680,38 @@ rule compare_plays:
 
 # Translating: Combine Results
 
-<div class="columns">
-<div>
+This rule needs to know about **all** pair combinations upfront. We build the list at the top of the Snakefile:
 
-**Bash**
-
-```bash
-echo "play1,play2,similarity" \
-  > output/similarity_matrix.csv
-
-for file in output/*.similarity; do
-  # parse filename, append CSV row
-done
+```python
+# At the top of the Snakefile:
+PLAYS, = glob_wildcards("data/{play}.txt")
+PAIRS = []
+for i, p1 in enumerate(PLAYS):
+    for p2 in PLAYS[i+1:]:
+        PAIRS.append((p1, p2))
 ```
+- The loop generates all 45 pairs of input files automatically
 
-</div>
-<div>
+---
 
-**Snakemake**
+# Translating: Combine Results
 
 ```python
 rule combine_results:
     input:
-        expand(
-          "output/{p1}_{p2}.similarity",
-          zip, p1=PLAY1S, p2=PLAY2S)
+        [f"output/{p1}_{p2}.similarity"
+         for p1, p2 in PAIRS]
     output:
         "output/similarity_matrix.csv"
     shell:
         """
-        echo "play1,play2,similarity" \
-          > {output}
+        echo "play1,play2,similarity" > {output}
         for file in {input}; do
           # parse filename, append row
         done
         """
 ```
 
-</div>
-</div>
-
-- `expand()` with `zip` generates all 45 input files
 
 ---
 
