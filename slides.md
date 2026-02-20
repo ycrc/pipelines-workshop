@@ -35,6 +35,7 @@ footer {
   box-sizing: border-box;
 }
 section::after { font-family: 'Roboto Slab', serif; }
+section.lead h1 { font-size: 2.4em; }
 section::before {
   content: '';
   background-image: url('images/ycrc-logo-white.png');
@@ -60,7 +61,7 @@ Yale Center for Research Computing
 
 - **The Problem**: why pipelines?
 - **Pipelining concepts**
-- **Our example workflow**
+- **An example workflow**
 - **Bash & Slurm**
 - **Snakemake**: turning our example into a Snakemake pipeline
 - **Nextflow**: using pipelines from the research community
@@ -70,10 +71,16 @@ Yale Center for Research Computing
 
 # Setup
 
-<!-- #TODO: Expand setup slide with commands for workshop repo clone, ls to check contents etc. -->
+Log in to the cluster and clone the workshop repository:
 
-- Log in to the cluster
-- Clone the workshop repo
+```bash
+git clone https://github.com/ycrc/pipelines-workshop.git
+cd pipelines-workshop
+ls examples/
+```
+
+You will need a terminal and a text editor.  
+We recommend an [Open OnDemand](https://docs.ycrc.yale.edu/clusters-at-yale/access/ood/) VS Code session.
 
 ---
 
@@ -122,12 +129,10 @@ Yale Center for Research Computing
 
 # Today's Learning Goals
 
-<!-- #TODO: Learning goals: workflow translation is snakemake only, nextflow is concepts and then existing pipelines. -->
-
 - Understand key concepts for constructing data pipelines
 - Build a simple workflow using bash scripts and Slurm
-- Translate that workflow into Snakemake and Nextflow
-- Learn how to configure Snakemake and Nextflow to run on an HPC cluster
+- Translate that workflow into a Snakemake pipeline
+- Run a community-maintained pipeline using Nextflow and nf-core
 ---
 
 <!-- _class: lead -->
@@ -203,11 +208,19 @@ Yale Center for Research Computing
 
 ---
 
-# The DAG
+# The DAG (Simplified)
 
-<!-- #TODO: Workflow image doesn't fit well, text too small. Make it horizontal with only 2 plays so it's more readable. -->
+For two plays, the workflow looks like this:
 
-![center h:480](images/workflow-dag.png)
+![center](images/workflow-dag-2play.png)
+
+---
+
+# The DAG (Full)
+
+With all 10 plays, the DAG fans out — 45 compare steps:
+
+![center h:400](images/workflow-dag.png)
 
 
 ---
@@ -215,6 +228,7 @@ Yale Center for Research Computing
 <!-- #TODO: During bash portion, show an illustration of how the data is being modified through each step in the pipeline. -->
 
 # The Bash Scripts
+
 
 Our original scripts are found in the workshop repository under `examples/bash/`: 
 
@@ -260,6 +274,12 @@ cat "$INPUT" \
 
 ---
 
+# 01 — Step 1: What It Looks Like
+
+![center](images/clean-step.png)
+
+---
+
 # 01 — Step 2: Count Word Frequencies
 
 Sort words, count unique occurrences, sort by frequency:
@@ -296,6 +316,12 @@ rm output/${PLAY}.counts.txt
 
 - `data/hamlet.txt` → `output/hamlet.top100.txt`
 - Intermediate `.clean.txt` and `.counts.txt` are deleted
+
+---
+
+# 01 — The Full Picture
+
+![center](images/analyze-pipeline.png)
 
 ---
 
@@ -359,6 +385,12 @@ echo "${SIMILARITY}" > output/${PLAY1}_${PLAY2}.similarity
 
 ---
 
+# 02 — The Full Picture
+
+![center](images/compare-step.png)
+
+---
+
 # 03_combine_results.sh
 
 Loop through all `.similarity` files, build a CSV:
@@ -377,7 +409,6 @@ for file in output/*.similarity; do
 done
 ```
 
-- Parses play names from the filename
 - Final output: `output/similarity_matrix.csv`
 
 ---
@@ -416,17 +447,44 @@ done
 
 # Moving to Slurm
 
-- Add `#SBATCH` directives for resources
-- Add email notifications
-- But still a single serial job — no parallelism
+Our script works, but we're running it on the login node. We need to:
+
+- **Request dedicated resources** — CPU, memory, time
+- **Run in the background** — submit the job and come back later
+- **Get notified** — email when the job finishes or fails
+
+We can wrap `00_run_all.sh` in a Slurm job script with `#SBATCH` directives. This is better, but still a single serial job — no parallelism.
+
+---
+
+# Slurm Job Script Review
+
+Add `#SBATCH` directives at the top of your script to request resources:
+
+|                   |               |            |
+| ----------------- | ------------- | ---------- |
+| `--job-name`      | `--partition` | `--time`   |
+| `--cpus-per-task` | `--mem`       | `--output` |
+| `--mail-type`     | `--mail-user` |            |
+
+```bash
+#SBATCH --partition=day
+#SBATCH --time=00:30:00
+```
+
+Full reference: [docs.ycrc.yale.edu/clusters-at-yale/job-scheduling](https://docs.ycrc.yale.edu/clusters-at-yale/job-scheduling/)
 
 ---
 
 # Hands-On: Bash + Slurm
 
-- Adapt `00_run_all.sh` to run as a Slurm job
-- Add resource directives and email notification
-- Submit and check the output
+1. Open `examples/bash/run_pipeline.sh` in your editor
+2. Add `#SBATCH` directives to set job name, partition, time, resources (CPU and Memory), output file, and email notifications
+3. Submit: `sbatch run_pipeline.sh`
+4. Watch progress: `tail -f pipeline.out`
+5. When done, check `output/similarity_matrix.csv`
+
+If you fall behind, the completed version is in `run_pipeline_solution.sh`.
 
 ---
 
@@ -493,7 +551,7 @@ cat "$INPUT" \
 ```python
 rule clean_text:
     input:
-        DATA_DIR + "/{play}.txt"
+        "data/{play}.txt"
     output:
         temp("output/{play}.clean.txt")
     shell:
@@ -646,47 +704,38 @@ rule compare_plays:
 
 # Translating: Combine Results
 
-<div class="columns">
-<div>
+This rule needs to know about **all** pair combinations upfront. We build the list at the top of the Snakefile:
 
-**Bash**
-
-```bash
-echo "play1,play2,similarity" \
-  > output/similarity_matrix.csv
-
-for file in output/*.similarity; do
-  # parse filename, append CSV row
-done
+```python
+# At the top of the Snakefile:
+PLAYS, = glob_wildcards("data/{play}.txt")
+PAIRS = []
+for i, p1 in enumerate(PLAYS):
+    for p2 in PLAYS[i+1:]:
+        PAIRS.append((p1, p2))
 ```
+- The loop generates all 45 pairs of input files automatically
 
-</div>
-<div>
+---
 
-**Snakemake**
+# Translating: Combine Results
 
 ```python
 rule combine_results:
     input:
-        expand(
-          "output/{p1}_{p2}.similarity",
-          zip, p1=PLAY1S, p2=PLAY2S)
+        [f"output/{p1}_{p2}.similarity"
+         for p1, p2 in PAIRS]
     output:
         "output/similarity_matrix.csv"
     shell:
         """
-        echo "play1,play2,similarity" \
-          > {output}
+        echo "play1,play2,similarity" > {output}
         for file in {input}; do
           # parse filename, append row
         done
         """
 ```
 
-</div>
-</div>
-
-- `expand()` with `zip` generates all 45 input files
 
 ---
 
@@ -710,9 +759,15 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 # Snakemake on Slurm
 
-- Cluster profile or `--executor slurm`
-- Each rule becomes a separate Slurm job
+<!-- #TODO: Add section in Snakemake on how to run python code, R code, existing scripts, matlab script, etc. -->
+
+- `--executor slurm` — each rule becomes a separate Slurm job
 - Snakemake monitors and schedules automatically
+
+```bash
+snakemake -j4 --executor slurm \
+  --default-resources slurm_partition=day mem_mb=1000 cpus_per_task=1
+```
 
 ---
 
@@ -721,10 +776,42 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 # Hands-On: Snakemake
 
-- Run the Snakemake pipeline
-- Try a dry run, then execute
-- Visualize the DAG
-- Compare output to the bash version
+1. `cd examples/snakemake` and `module load snakemake`
+2. Dry run: `snakemake -n`
+3. Execute: `snakemake -j1`
+4. Check: `cat output/similarity_matrix.csv`
+5. Simulate a data change and dry-run — only affected steps re-execute:
+   ```bash
+   touch ../data/hamlet.txt
+   snakemake -n   # 14 of 77 jobs will re-run
+   ```
+
+---
+
+# Demo: Snakemake on Slurm
+
+A head job orchestrates, submitting each rule as a child Slurm job:
+
+```bash
+#!/bin/bash
+#SBATCH --partition=day
+#SBATCH --time=00:10:00
+#SBATCH --mem=1G
+#SBATCH --output=pipeline.out
+
+module load snakemake
+snakemake -j2 --executor slurm --latency-wait 30 \
+  --default-resources slurm_partition=day \
+  mem_mb=1000 cpus_per_task=1 runtime=5
+```
+
+---
+
+<!-- _class: lead -->
+
+# Break
+
+10 minutes
 
 ---
 
@@ -751,29 +838,49 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 ---
 
-# Translating to Nextflow
+# Snakemake vs Nextflow
 
-- Each step becomes a process
-- Channels wire the DAG together
-- Configuration is separate from workflow logic
+|                         | Snakemake                        | Nextflow                      |
+| ----------------------- | -------------------------------- | ----------------------------- |
+| **Language**            | Python                           | Groovy                        |
+| **Approach**            | File-based (rules produce files) | Dataflow (channels pass data) |
+| **Learning curve**      | Lower (Python syntax)            | Higher (Groovy + channels)    |
+| **Config**              | Snakefile + config.yaml          | nextflow.config + profiles    |
+| **Community pipelines** | Snakemake Catalog                | nf-core                       |
+
+**In general:** Snakemake is more intuitive, while Nextflow has additional features for more complex workflows and deployments.
+
+---
+
+# Nextflow in Practice
+
+Rather than re-implement our Shakespeare workflow, we'll focus on the **most common real-world use case**: running an existing, community-maintained pipeline.
+
+- Thousands of researchers use Nextflow this way every day
+- Someone has already written, tested, and optimized the pipeline
+- You provide your data and configuration — Nextflow does the rest
 
 ---
 
 # Nextflow Configuration
 
-<!-- #TODO: Add section about config for running on Slurm. Based on Gisela's https://github.com/ggabernet/nf-core-configs/blob/master/conf/mccleary.config -->
+Configuration is separate from the pipeline code:
 
-- `nextflow.config` for executor, resources, containers
-- Profiles for different environments (local, Slurm)
-- Container support built in
+- `nextflow.config` — executor, resources, containers
+- **Profiles** — switch between environments (local, Slurm)
+- On our cluster, we use the `apptainer` profile for containers
 
----
-
-# Execution Model
-
-- Work directory for intermediate files
-- Caching and `-resume` for re-runs
-- Execution report and timeline visualization
+```groovy
+// nextflow.config example for Slurm
+process {
+    executor = 'slurm'
+    queue    = 'day'
+}
+apptainer {
+    enabled  = true
+    cacheDir = '~/scratch/apptainer_cache'
+}
+```
 
 ---
 
@@ -784,6 +891,8 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 ---
 
 # What is nf-core?
+
+<!-- TODO: Add slide that is just a screenshot of the nf-core website. -->
 
 - Community of **100+ curated Nextflow pipelines**
 - Standardized structure: every pipeline works the same way
