@@ -207,16 +207,22 @@ You will need a terminal and a text editor. We recommend an [Open OnDemand](http
 
 ---
 
-# The DAG
+# The DAG (Simplified)
 
-<!-- #TODO: Workflow image doesn't fit well, text too small. Make it horizontal with only 2 plays so it's more readable. -->
+For two plays, the workflow looks like this:
 
-![center h:480](images/workflow-dag.png)
-
+![center](images/workflow-dag-2play.png)
 
 ---
 
-<!-- #TODO: During bash portion, show an illustration of how the data is being modified through each step in the pipeline. -->
+# The DAG (Full)
+
+With all 10 plays, the DAG fans out — 45 compare steps:
+
+![center h:400](images/workflow-dag.png)
+
+
+---
 
 # The Bash Scripts
 
