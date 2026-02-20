@@ -61,7 +61,7 @@ Yale Center for Research Computing
 
 - **The Problem**: why pipelines?
 - **Pipelining concepts**
-- **Our example workflow**
+- **An example workflow**
 - **Bash & Slurm**
 - **Snakemake**: turning our example into a Snakemake pipeline
 - **Nextflow**: using pipelines from the research community
@@ -71,10 +71,15 @@ Yale Center for Research Computing
 
 # Setup
 
-<!-- #TODO: Expand setup slide with commands for workshop repo clone, ls to check contents etc. -->
+Log in to the cluster and clone the workshop repository:
 
-- Log in to the cluster
-- Clone the workshop repo
+```bash
+git clone https://github.com/ycrc/pipelines-workshop.git
+cd pipelines-workshop
+ls examples/
+```
+
+You will need a terminal and a text editor. We recommend an [Open OnDemand](https://ood.ycrc.yale.edu) VS Code session.
 
 ---
 
@@ -123,12 +128,10 @@ Yale Center for Research Computing
 
 # Today's Learning Goals
 
-<!-- #TODO: Learning goals: workflow translation is snakemake only, nextflow is concepts and then existing pipelines. -->
-
 - Understand key concepts for constructing data pipelines
 - Build a simple workflow using bash scripts and Slurm
-- Translate that workflow into Snakemake and Nextflow
-- Learn how to configure Snakemake and Nextflow to run on an HPC cluster
+- Translate that workflow into a Snakemake pipeline
+- Run a community-maintained pipeline using Nextflow and nf-core
 ---
 
 <!-- _class: lead -->
