@@ -79,7 +79,8 @@ cd pipelines-workshop
 ls examples/
 ```
 
-You will need a terminal and a text editor. We recommend an [Open OnDemand](https://ood.ycrc.yale.edu) VS Code session.
+You will need a terminal and a text editor.  
+We recommend an [Open OnDemand](https://docs.ycrc.yale.edu/clusters-at-yale/access/ood/) VS Code session.
 
 ---
 
@@ -756,23 +757,56 @@ When executing `snakemake`, it will find a `Snakefile` in the current directory.
 
 # Snakemake on Slurm
 
-- Cluster profile or `--executor slurm`
-- Each rule becomes a separate Slurm job
+<!-- #TODO: Add section in Snakemake on how to run python code, R code, existing scripts, matlab script, etc. -->
+
+- `--executor slurm` — each rule becomes a separate Slurm job
 - Snakemake monitors and schedules automatically
+
+```bash
+snakemake -j4 --executor slurm \
+  --default-resources slurm_partition=day mem_mb=1000 cpus_per_task=1
+```
 
 ---
 
-<!-- #TODO: Add section in Snakemake on how to run python code, R code, existing scripts, matlab script, etc. -->
-<!-- #TODO: Add section in Snakemake on setup for running in HPC on Slurm. -->
-
 # Hands-On: Snakemake
 
-<!-- I'd like to expand this. First step, users just run the finished pipeline. Second step, users need to add a rule or do something to add to the snakefile and re-run. -->
+1. `cd examples/snakemake` and `module load snakemake`
+2. Dry run: `snakemake -n`
+3. Execute: `snakemake -j1`
+4. Check: `cat output/similarity_matrix.csv`
+5. Simulate a data change and dry-run — only affected steps re-execute:
+   ```bash
+   touch ../data/hamlet.txt
+   snakemake -n   # 14 of 77 jobs will re-run
+   ```
 
-- Run the Snakemake pipeline
-- Try a dry run, then execute
-- Visualize the DAG
-- Compare output to the bash version
+---
+
+# Demo: Snakemake on Slurm
+
+A head job orchestrates, submitting each rule as a child Slurm job:
+
+```bash
+#!/bin/bash
+#SBATCH --partition=day
+#SBATCH --time=00:10:00
+#SBATCH --mem=1G
+#SBATCH --output=pipeline.out
+
+module load snakemake
+snakemake -j2 --executor slurm --latency-wait 30 \
+  --default-resources slurm_partition=day \
+  mem_mb=1000 cpus_per_task=1 runtime=5
+```
+
+---
+
+<!-- _class: lead -->
+
+# Break
+
+10 minutes
 
 ---
 
