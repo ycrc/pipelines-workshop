@@ -454,13 +454,34 @@ We can wrap `00_run_all.sh` in a Slurm job script with `#SBATCH` directives. Thi
 
 ---
 
+# Slurm Job Script Review
+
+Add `#SBATCH` directives at the top of your script to request resources:
+
+|                   |               |            |
+| ----------------- | ------------- | ---------- |
+| `--job-name`      | `--partition` | `--time`   |
+| `--cpus-per-task` | `--mem`       | `--output` |
+| `--mail-type`     | `--mail-user` |            |
+
+```bash
+#SBATCH --partition=day
+#SBATCH --time=00:30:00
+```
+
+Full reference: [docs.ycrc.yale.edu/clusters-at-yale/job-scheduling](https://docs.ycrc.yale.edu/clusters-at-yale/job-scheduling/)
+
+---
+
 # Hands-On: Bash + Slurm
 
-<!-- TODO: Add a slide with a simple example of a Slurm job script, showing #SBATCH directives and a simple command. Add a start/solution example script pair for users to follow along. Perhaps show a slide with quick reference of SBATCH directives while people are working. -->
+1. Open `examples/bash/run_pipeline.sh` in your editor
+2. Add `#SBATCH` directives to set job name, partition, time, resources (CPU and Memory), output file, and email notifications
+3. Submit: `sbatch run_pipeline.sh`
+4. Watch progress: `tail -f pipeline.out`
+5. When done, check `output/similarity_matrix.csv`
 
-- Adapt `00_run_all.sh` to run as a Slurm job
-- Add resource directives and email notification
-- Submit and check the output
+If you fall behind, the completed version is in `run_pipeline_solution.sh`.
 
 ---
 

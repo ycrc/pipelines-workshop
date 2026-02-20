@@ -1,6 +1,14 @@
 #!/bin/bash
+#SBATCH --job-name=pipeline
+#SBATCH --partition=day
+#SBATCH --time=00:30:00
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --output=pipeline.out
+#SBATCH --mail-type=END,FAIL
+#SBATCH --mail-user=sam.friedman@yale.edu
 
-# run_all.sh - Run the full analysis pipeline on all plays
+cd $SLURM_SUBMIT_DIR
 
 # Step 1: Analyze all plays
 echo "=== Analyzing all plays ==="

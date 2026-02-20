@@ -4,7 +4,7 @@
 # Usage: ./analyze_play.sh <play>
 
 PLAY="$1"
-INPUT="data/${PLAY}.txt"
+INPUT="../data/${PLAY}.txt"
 
 # Create output directory
 mkdir -p output
