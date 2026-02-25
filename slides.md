@@ -142,7 +142,6 @@ We recommend an [Open OnDemand](https://docs.ycrc.yale.edu/clusters-at-yale/acce
 
 ---
 
-<!-- #TODO: Add more examples of DAG diagrams, "this is a DAG" "this is not" etc. -->
 
 # Flowcharts and DAGs
 
@@ -225,8 +224,6 @@ With all 10 plays, the DAG fans out — 45 compare steps:
 
 
 ---
-
-<!-- #TODO: During bash portion, show an illustration of how the data is being modified through each step in the pipeline. -->
 
 # The Bash Scripts
 
