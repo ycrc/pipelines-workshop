@@ -64,6 +64,7 @@ Yale Center for Research Computing
 - **An example workflow**
 - **Bash & Slurm**
 - **Snakemake**: turning our example into a Snakemake pipeline
+- **Break**: 10minute break
 - **Nextflow**: using pipelines from the research community
 - **Resources**
 
@@ -484,7 +485,7 @@ Full reference: [docs.ycrc.yale.edu/clusters-at-yale/job-scheduling](https://doc
 4. Watch progress: `tail -f pipeline.out`
 5. When done, check `output/similarity_matrix.csv`
 
-If you fall behind, the completed version is in `run_pipeline_solution.sh`.
+The completed version is in `run_pipeline_solution.sh`.
 
 ---
 
@@ -493,6 +494,8 @@ If you fall behind, the completed version is in `run_pipeline_solution.sh`.
 # Snakemake
 
 ---
+
+<!-- TODO: For both snakemake and nextflow make sure we cover how to set job steps to run in local mode for small steps that would take longer to queue than to run. -->
 
 # What is Snakemake?
 
@@ -848,7 +851,94 @@ snakemake -j2 --executor slurm --latency-wait 30 \
 | **Config**              | Snakefile + config.yaml          | nextflow.config + profiles    |
 | **Community pipelines** | Snakemake Catalog                | nf-core                       |
 
-**In general:** Snakemake is more intuitive, while Nextflow has additional features for more complex workflows and deployments.
+Snakemake is more intuitive, while Nextflow has more features for complex workflows.
+
+---
+
+# Side by Side: clean_text
+
+<div class="columns">
+<div>
+
+**Snakemake**
+```python
+rule clean_text:
+    input:
+        "data/{play}.txt"
+    output:
+        temp("output/{play}.clean.txt")
+    shell:
+        """
+        cat {input} \
+          | tr '[:upper:]' '[:lower:]' \
+          | tr -d '[:punct:]' \
+          | tr -s '[:space:]' '\\n' \
+          > {output}
+        """
+```
+
+</div>
+<div>
+
+**Nextflow**
+```groovy
+process clean_text {
+    input:
+    path play
+
+    output:
+    tuple val(play.baseName),
+          path("${play.baseName}.clean.txt")
+
+    script:
+    """
+    cat ${play} \
+      | tr '[:upper:]' '[:lower:]' \
+      | tr -d '[:punct:]' \
+      | tr -s '[:space:]' '\\n' \
+      > ${play.baseName}.clean.txt
+    """
+}
+```
+
+</div>
+</div>
+
+---
+
+# Nextflow: Channels and Workflow
+
+Where does `path play` come from? The **workflow** block wires it up:
+
+```groovy
+// Create a channel from all .txt files
+plays_ch = Channel.fromPath("data/*.txt")
+
+workflow {
+    cleaned = clean_text(plays_ch)   // each file flows into clean_text
+    counted = count_words(cleaned)   // output flows into count_words
+    top100  = top_words(counted)     // and so on...
+}
+```
+
+- A **channel** is a stream of data flowing between processes
+- Nextflow automatically parallelizes: 10 files in the channel = 10 concurrent tasks
+- No wildcards or filename patterns — data flows through the DAG
+
+---
+
+# Hands-On: Nextflow Shakespeare
+
+Our Shakespeare workflow is implemented in Nextflow in `examples/nextflow/shakespeare/`.
+
+```bash
+cd examples/nextflow/shakespeare
+module load Nextflow
+nextflow run main.nf
+```
+
+When finished, inspect the output files and the execution report in `results/`.
+
 
 ---
 
@@ -883,6 +973,13 @@ apptainer {
 ```
 
 ---
+
+<!-- TODO: MUST-DO: Add a slide here about -resume and the work/ directory.
+  - work/ holds all intermediate files, can get large
+  - -resume restarts from where you left off (critical for long pipelines)
+  - nextflow clean to tidy up
+  This is important enough for the workshop to be in slides, not just the README.
+-->
 
 <!-- _class: lead -->
 
@@ -919,8 +1016,10 @@ nextflow run nf-core/<pipeline> -profile test,apptainer --outdir results
 
 While I walk through the next slides, run this to download container images:
 
+<!-- TODO: MUST-DO: Add salloc with appropriate resources before the actual pipeline run slide. This salloc is fine for just pulling images. Confirm resources after testing. -->
 ```bash
-module load Nextflow/24.10.2
+salloc
+module load Nextflow
 export NXF_APPTAINER_CACHEDIR=~/scratch/apptainer_cache
 mkdir -p $NXF_APPTAINER_CACHEDIR
 nextflow pull nf-core/rnaseq
@@ -1016,6 +1115,19 @@ Browse https://nf-co.re/pipelines — examples:
 - [Nextflow training](https://training.nextflow.io/)
 - [Snakemake documentation](https://snakemake.readthedocs.io/)
 - Yale HPC documentation and office hours
+
+---
+
+<!-- _footer: "" -->
+
+# Workshop Feedback
+
+Please help us improve this workshop by sharing feedback via a 2-minute anonymous survey. Thank you.
+
+For access — click the link or scan the QR Code:
+https://yalesurvey.ca1.qualtrics.com/jfe/form/SV_ac86jTriewu9l8W
+
+![center h:350](images/feedback_qr.png) 
 
 ---
 

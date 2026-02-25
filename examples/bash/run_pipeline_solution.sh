@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --job-name=pipeline
-#SBATCH --partition=day
+#SBATCH --partition=devel
 #SBATCH --time=00:30:00
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G

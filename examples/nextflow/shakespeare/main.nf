@@ -8,7 +8,7 @@
 //   nextflow clean -f               // clean up the work directory
 
 // Path to input data
-params.data_dir = "${projectDir}/../data"
+params.data_dir = "${projectDir}/../../data"
 
 // Collect all play text files into a channel
 plays_ch = Channel.fromPath("${params.data_dir}/*.txt")
