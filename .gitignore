@@ -8,4 +8,5 @@ package*.json
 **/pipeline_info/
 *.pdf
 *.out
+*.html
 *.log*

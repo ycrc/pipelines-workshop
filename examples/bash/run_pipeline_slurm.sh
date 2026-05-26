@@ -8,6 +8,7 @@
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=<your-email>@yale.edu
 
+touch pipeline.out
 
 # Step 1: Analyze all plays
 echo "=== Analyzing all plays ==="

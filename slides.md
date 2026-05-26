@@ -3,7 +3,7 @@ marp: true
 theme: default
 paginate: true
 header: "Pipelining Tools for HPC Workflows"
-footer: "February 24, 2026"
+footer: "May 26, 2026"
 ---
 
 <style>
@@ -298,6 +298,19 @@ done
 
 ---
 
+# Hands-On: Run the Bash Pipeline
+
+1. `cd examples/bash`
+2. `bash run_pipeline.sh`
+3. Check `output/similarity_matrix.csv`
+4. Simulate a data change: `echo "change" >> ../data/hamlet.txt`
+5. Re-run: `bash run_pipeline.sh`
+6. Notice the **entire** pipeline runs again: even the 9 unchanged plays
+
+This naïve approach to our pipeline has obvious drawbacks...
+
+---
+
 # Moving to Slurm
 
 Our script works, but we're running it on the login node.   
@@ -308,20 +321,6 @@ For a real workflow, we commonly:
 - **Get notified**: email when the job finishes or fails
 
 We can wrap `00_run_all.sh` in a Slurm job script with `#SBATCH` directives. This is better, but still a single serial job: no parallelism.
-
----
-
-
-# Hands-On: Run the Bash Pipeline
-
-1. `cd examples/bash`
-2. `bash run_pipeline.sh`
-3. Check `output/similarity_matrix.csv`
-4. Simulate a data change: `echo "change" >> ../data/hamlet.txt`
-5. Re-run: `bash run_pipeline_solution.sh`
-6. Notice the **entire** pipeline runs again: even the 9 unchanged plays
-
-This naïve approach to our pipeline has obvious drawbacks...
 
 ---
 
@@ -546,10 +545,10 @@ This rule needs to know about **all** pair combinations upfront. We build the li
 
 ```python
 # At the top of the Snakefile:
-PLAYS, = glob_wildcards("data/{play}.txt")
+(PLAYS,) = glob_wildcards("data/{play}.txt")
 PAIRS = []
 for i, p1 in enumerate(PLAYS):
-    for p2 in PLAYS[i+1:]:
+    for p2 in PLAYS[i + 1 :]:
         PAIRS.append((p1, p2))
 ```
 - The loop generates all 45 pairs of input files automatically
@@ -664,27 +663,6 @@ rule star_align:
 
 ---
 
-# Containers in Snakemake
-
-Your pipeline needs specific software versions: containers bundle everything so results are reproducible anywhere.
-
-Snakemake supports per-rule `container:` directives:
-
-```python
-rule align_reads:
-    input: "reads.fastq"
-    output: "aligned.bam"
-    container: "docker://biocontainers/bwa:0.7.17"
-    shell: "bwa mem {input} > {output}"
-```
-
-You can also point to a local `.sif` file: `container: "/path/to/bwa.sif"`
-
-On our clusters we use **Apptainer** (not Docker), but Snakemake will convert.
-
----
-
-
 # Python Scripts
 
 Use `script:` to call a Python script. Snakemake passes inputs/outputs automatically:
@@ -725,7 +703,7 @@ plt.savefig(snakemake.output[0])
 
 # R Scripts
 
-Same pattern for R: Snakemake provides an `snakemake@` object:
+Same pattern for R: Snakemake provides a `snakemake@` object:
 
 <div class="columns">
 <div>
@@ -757,6 +735,26 @@ saveRDS(model, snakemake@output[[1]])
 </div>
 
 `shell:` still works for any command-line tool: MATLAB, Julia, etc.
+
+---
+
+# Containers in Snakemake
+
+Your pipeline needs specific software versions: containers bundle everything so results are reproducible anywhere.
+
+Snakemake supports per-rule `container:` directives:
+
+```python
+rule align_reads:
+    input: "reads.fastq"
+    output: "aligned.bam"
+    container: "docker://biocontainers/bwa:0.7.17"
+    shell: "bwa mem {input} > {output}"
+```
+
+You can also point to a local `.sif` file: `container: "/path/to/bwa.sif"`
+
+On our clusters we use **Apptainer** (not Docker), but Snakemake will convert.
 
 ---
 
@@ -794,7 +792,7 @@ A head job orchestrates, submitting each rule as a child Slurm job:
 
 ```bash
 #!/bin/bash
-#SBATCH --partition=day
+#SBATCH --partition=devel
 #SBATCH --time=00:10:00
 #SBATCH --mem=1G
 #SBATCH --output=pipeline.out
@@ -1179,7 +1177,7 @@ Open `output/multiqc/multiqc_report.html` for alignment rates, read quality, and
 
 # Finding Pipelines for Your Research
 
-Browse https://nf-co.re/pipelines: examples:
+Browse https://nf-co.re/pipelines, examples:
 
 | Domain            | Pipeline         |
 | ----------------- | ---------------- |
@@ -1188,7 +1186,22 @@ Browse https://nf-co.re/pipelines: examples:
 | Single-cell       | nf-core/scrnaseq |
 | ATAC-seq          | nf-core/atacseq  |
 | Amplicon (16S)    | nf-core/ampliseq |
-| Fetch public data | nf-core/fetchngs |
+| Fetch public data | nf-core/fetchngs 
+
+---
+
+# Finding Pipelines for Your Research
+
+Snakemake has a pipeline catalog too, https://snakemake.github.io/snakemake-workflow-catalog:
+
+| Domain            | Pipeline         |
+| ----------------- | ---------------- |
+| RNA-seq           | rna-seq-star-deseq2   |
+| Variant calling   | dna-seq-gatk-variant-calling    |
+| Single-cell       | epigen/scrnaseq_processing_seurat |
+| ATAC-seq          | epigen/atacseq_pipeline  |
+| Amplicon (16S)    | cmc-aau/nanopore_16Samp |
+| Fetch public data | epigen/fetch_ngs
 
 ---
 
@@ -1197,7 +1210,7 @@ Browse https://nf-co.re/pipelines: examples:
 - [nf-core documentation](https://nf-co.re/docs/usage/getting_started/introduction)
 - [Nextflow training](https://training.nextflow.io/)
 - [Snakemake documentation](https://snakemake.readthedocs.io/)
-- Yale HPC documentation and office hours
+- [Yale HPC documentation](https://docs.ycrc.yale.edu/) and office hours
 
 ---
 

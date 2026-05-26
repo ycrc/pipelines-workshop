@@ -34,7 +34,7 @@ rule all:
     input:
         "output/similarity_matrix.csv"
 
-# Step 1a: Clean text — lowercase, remove punctuation, one word per line
+# Step 1a: Clean text: lowercase, remove punctuation, one word per line
 rule clean_text:
     input:
         DATA_DIR + "/{play}.txt"
@@ -93,7 +93,7 @@ rule compare_plays:
 # Step 3: Combine all pairwise results into a CSV matrix
 rule combine_results:
     input:
-        expand("output/{play1}_{play2}.similarity", zip, play1=PLAY1S, play2=PLAY2S)
+        [f"output/{p1}_{p2}.similarity" for p1, p2 in PAIRS]
     output:
         "output/similarity_matrix.csv"
     shell:
